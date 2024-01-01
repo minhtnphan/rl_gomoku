@@ -21,13 +21,13 @@ class Gomoku(gym.Env):
         self.action_space = Discrete(self.size ** 2)
         # self.action_space = MultiDiscrete(nvec=(size, size))
         self.start_player = None
-    
+
     def reset(self):
         self.board = np.zeros(shape=self.observation_space.shape)
         self.next_player = "blue"
         self.start_player = "blue"
         return np.zeros(shape=self.observation_space.shape), {"next player": self.next_player}
-    
+
     def step(self, action):
         if self.next_player == "blue":
             self.next_player = "red"
@@ -38,21 +38,23 @@ class Gomoku(gym.Env):
         assert self.action_space.contains(action), "invalid action"
         # Step 1: convert discrete action to position (i, j)
         i = action // self.size
-        j = action - i * self.size 
+        j = action - i * self.size
         # Step 2: check if position is occupied:
         if self.board[i, j] != 0:
-            return None, -1000, True, False, {"start player": self.start_player, "winner": self.next_player} # Next state, reward, done, truncated, info
+            return None, -1000, True, False, {"start player": self.start_player,
+                                              "winner": self.next_player}  # Next state, reward, done, truncated, info
         else:
             if previous_player == "blue":
                 self.board[i, j] = 1
             else:
                 self.board[i, j] = 2
-        # Step 3: check if self.board result in a winning
+            # Step 3: check if self.board result in a winning
             if self.win():
+                print(self.board)
                 return None, 1000, True, False, {"start player": self.start_player, "winner": previous_player}
             else:
                 return self.board.copy(), 1, False, False, {}
-    
+
     def render(self):
         if self.render_mode == "human":
             if self.window is None:
@@ -65,16 +67,18 @@ class Gomoku(gym.Env):
             canvas.fill((255, 255, 255))
             pix_size = (self.window_size / self.size)
             for x in range(self.size + 1):
-                pygame.draw.line(canvas, 0, (0, pix_size * x), (self.window_size, pix_size * x), width=3,)
-                pygame.draw.line(canvas, 0, (pix_size * x, 0), (pix_size * x, self.window_size), width=3,)
+                pygame.draw.line(canvas, 0, (0, pix_size * x), (self.window_size, pix_size * x), width=3, )
+                pygame.draw.line(canvas, 0, (pix_size * x, 0), (pix_size * x, self.window_size), width=3, )
             cells = np.nditer(self.board, flags=["multi_index"])
             for cell in cells:
                 if cell == 1:
                     # Draw blue circle with position cells.multi_index
-                    pygame.draw.circle(canvas, (0, 0, 255), (np.array(cells.multi_index) + 0.5) * pix_size, pix_size / 3,)
+                    pygame.draw.circle(canvas, (0, 0, 255), (np.array(cells.multi_index) + 0.5) * pix_size,
+                                       pix_size / 3, )
                 elif cell == 2:
                     # Draw red circle with position cells.multi_index
-                    pygame.draw.circle(canvas, (255, 0, 0), (np.array(cells.multi_index) + 0.5) * pix_size, pix_size / 3,)
+                    pygame.draw.circle(canvas, (255, 0, 0), (np.array(cells.multi_index) + 0.5) * pix_size,
+                                       pix_size / 3, )
                 else:
                     pass
             self.window.blit(canvas, canvas.get_rect())
@@ -91,7 +95,53 @@ class Gomoku(gym.Env):
             pygame.quit()
 
     def win(self):
-        # To be implemented
+
+        # check horizontal lines
+        for row in self.board:
+            consecutive_wins = 1
+            for j in range(len(row)):
+                if row[j] == row[j - 1] and row[j] != 0:
+                    consecutive_wins += 1
+                else:
+                    consecutive_wins = 1
+                if consecutive_wins == 5:
+                    print('horizontal')
+                    return True
+
+        # check vertical lines
+        for col in range(len(self.board[0])):
+            consecutive_wins = 1
+            for row in range(1, len(self.board)):
+                if self.board[row][col] == self.board[row - 1][col] and self.board[row][col] != 0:
+                    consecutive_wins += 1
+                else:
+                    consecutive_wins = 1
+                if consecutive_wins == 5:
+                    return True
+
+        # check diagonal lines - top left -> bottom right
+        for k in range(len(self.board) - 4):
+            for l in range(4, len(self.board[0])):
+                consecutive_wins = 1
+                for m in range(5):
+                    if self.board[k + m][l - m] == self.board[k][l] and self.board[k + m][l - m] != 0:
+                        consecutive_wins += 1
+                    else:
+                        consecutive_wins = 1
+                    if consecutive_wins == 5:
+                        return True
+
+        # check diagonal lines top right -> bottom left
+        for t in range(len(self.board) - 4):
+            for j in range(4, len(self.board[0])):
+                consecutive_wins = 1
+                for k in range(5):
+                    if self.board[t + k][j - k] == self.board[t][j] and self.board[t + k][j - k] != 0:
+                        consecutive_wins += 1
+                    else:
+                        break
+                if consecutive_wins == 5:
+                    return True
         return False
 
 
@@ -110,7 +160,7 @@ class RandomGomoku(Gomoku):
             opponent_action = i * self.size + j
             opponent_next_state, opponent_reward, done, truncated, info = super().step(opponent_action)
             return opponent_next_state, info
-    
+
     def step(self, action):
         next_state, reward, done, truncated, info = super().step(action)
         if done or truncated:
@@ -123,16 +173,17 @@ class RandomGomoku(Gomoku):
                 return opponent_next_state, reward, done, truncated, info
             else:
                 return opponent_next_state, - opponent_reward, done, truncated, info
-            
 
-env = RandomGomoku()
-obs = env.reset()
-done = False
-i = 0
-while not done:
-    i += 1
-    action = random.randint(0, 200)
-    next_state, reward, done, truncated, info = env.step(action)
-    print(info)
-    env.render()
-print(i)
+
+if __name__ == '__main__':
+    env = Gomoku()
+    obs = env.reset()
+    done = False
+    i = 0
+    while not done:
+        i += 1
+        action = random.randint(0, 200)
+        next_state, reward, done, truncated, info = env.step(action)
+        print(info)
+        env.render()
+    print(i)
