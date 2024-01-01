@@ -50,7 +50,6 @@ class Gomoku(gym.Env):
                 self.board[i, j] = 2
             # Step 3: check if self.board result in a winning
             if self.win():
-                print(self.board)
                 return None, 1000, True, False, {"start player": self.start_player, "winner": previous_player}
             else:
                 return self.board.copy(), 1, False, False, {}
@@ -95,7 +94,6 @@ class Gomoku(gym.Env):
             pygame.quit()
 
     def win(self):
-
         # check horizontal lines
         for row in self.board:
             consecutive_wins = 1
@@ -105,7 +103,6 @@ class Gomoku(gym.Env):
                 else:
                     consecutive_wins = 1
                 if consecutive_wins == 5:
-                    print('horizontal')
                     return True
 
         # check vertical lines
@@ -168,7 +165,7 @@ class RandomGomoku(Gomoku):
         else:
             i, j = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
             opponent_action = i * self.size + j
-            opponent_next_state, opponent_reward, done, truncated, info = super().step(opponent_action)
+            opponent_next_state, opponent_reward, opponent_done, opponent_truncated, info = super().step(opponent_action)
             if opponent_reward == 1:
                 return opponent_next_state, reward, done, truncated, info
             else:
@@ -176,10 +173,11 @@ class RandomGomoku(Gomoku):
 
 
 if __name__ == '__main__':
-    env = Gomoku()
+    env = RandomGomoku()
     obs = env.reset()
     done = False
     i = 0
+    action_values = []
     while not done:
         i += 1
         action = random.randint(0, 200)
