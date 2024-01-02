@@ -41,7 +41,7 @@ class Gomoku(gym.Env):
         j = action - i * self.size 
         # Step 2: check if position is occupied:
         if self.board[i, j] != 0:
-            return None, -1000, True, False, {"start player": self.start_player, "winner": self.next_player} # Next state, reward, done, truncated, info
+            return None, -1, True, False, {"start player": self.start_player, "winner": self.next_player} # Next state, reward, done, truncated, info
         else:
             if previous_player == "blue":
                 self.board[i, j] = 1
@@ -49,9 +49,9 @@ class Gomoku(gym.Env):
                 self.board[i, j] = 2
         # Step 3: check if self.board result in a winning
             if self.win():
-                return None, 1000, True, False, {"start player": self.start_player, "winner": previous_player}
+                return None, 1, True, False, {"start player": self.start_player, "winner": previous_player}
             else:
-                return self.board.copy(), 1, False, False, {}
+                return self.board.copy(), 0, False, False, {}
     
     def render(self):
         if self.render_mode == "human":
@@ -119,10 +119,10 @@ class RandomGomoku(Gomoku):
             i, j = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
             opponent_action = i * self.size + j
             opponent_next_state, opponent_reward, done, truncated, info = super().step(opponent_action)
-            if opponent_reward == 1:
+            if opponent_reward == 0:
                 return opponent_next_state, reward, done, truncated, info
             else:
-                return opponent_next_state, - opponent_reward, done, truncated, info
+                return opponent_next_state, -opponent_reward, done, truncated, info
             
 
 env = RandomGomoku()
