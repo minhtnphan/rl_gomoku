@@ -5,6 +5,7 @@ import pygame
 import random
 
 
+
 class Gomoku(gym.Env):
     def __init__(self, size=19, render_mode="human", render_fps=1) -> None:
         super().__init__()
