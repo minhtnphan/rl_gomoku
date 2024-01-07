@@ -6,7 +6,7 @@ import random
 
 
 class Gomoku(gym.Env):
-    def __init__(self, size=19, render_mode="human", render_fps=1) -> None:
+    def __init__(self, size=7, render_mode="rgb_array", render_fps=1) -> None:
         super().__init__()
         self.size = size
         self.window_size = 512
@@ -41,7 +41,8 @@ class Gomoku(gym.Env):
         j = action - i * self.size
         # Step 2: check if position is occupied:
         if self.board[i, j] != 0:
-            return None, -1000, True, False, {"start player": self.start_player, "winner": self.next_player} # Next state, reward, done, truncated, info
+            return (np.zeros(shape=self.observation_space.shape), -1, True, False,
+                    {"start player": self.start_player, "winner": self.next_player})
         else:
             if previous_player == "blue":
                 self.board[i, j] = 1
@@ -49,9 +50,10 @@ class Gomoku(gym.Env):
                 self.board[i, j] = 2
         # Step 3: check if self.board result in a winning
             if self.win():
-                return None, 1000, True, False, {"start player": self.start_player, "winner": previous_player}
+                return (np.zeros(shape=self.observation_space.shape), 1, True, False,
+                        {"start player": self.start_player, "winner": previous_player})
             else:
-                return self.board.copy(), 1, False, False, {}
+                return self.board.copy(), 0, False, False, {}
     
     def render(self):
         if self.render_mode == "human":
@@ -86,6 +88,27 @@ class Gomoku(gym.Env):
             # We need to ensure that human-rendering occurs at the predefined framerate.
             # The following line will automatically add a delay to keep the framerate stable.
             self.clock.tick(self.render_fps)
+        if self.render_mode == "rgb_array":
+            canvas = pygame.Surface((self.window_size, self.window_size))
+            canvas.fill((255, 255, 255))
+            pix_size = (self.window_size / self.size)
+            for x in range(self.size + 1):
+                pygame.draw.line(canvas, 0, (0, pix_size * x), (self.window_size, pix_size * x), width=3, )
+                pygame.draw.line(canvas, 0, (pix_size * x, 0), (pix_size * x, self.window_size), width=3, )
+            cells = np.nditer(self.board, flags=["multi_index"])
+            for cell in cells:
+                if cell == 1:
+                    # Draw blue circle with position cells.multi_index
+                    pygame.draw.circle(canvas, (0, 0, 255), (np.array(cells.multi_index) + 0.5) * pix_size,
+                                       pix_size / 3, )
+                elif cell == 2:
+                    # Draw red circle with position cells.multi_index
+                    pygame.draw.circle(canvas, (255, 0, 0), (np.array(cells.multi_index) + 0.5) * pix_size,
+                                       pix_size / 3, )
+                else:
+                    pass
+            return pygame.PixelArray(canvas)
+
 
     def close(self):
         if self.window is not None:
@@ -142,8 +165,8 @@ class Gomoku(gym.Env):
 
 
 class RandomGomoku(Gomoku):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
     def reset(self):
         state, info = super().reset()
@@ -165,22 +188,22 @@ class RandomGomoku(Gomoku):
             i, j = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
             opponent_action = i * self.size + j
             opponent_next_state, opponent_reward, done, truncated, info = super().step(opponent_action)
-            if opponent_reward == 1:
+            if opponent_reward == 0:
                 return opponent_next_state, reward, done, truncated, info
             else:
-                return opponent_next_state, - opponent_reward, done, truncated, info
+                return opponent_next_state, 0.0 - opponent_reward, done, truncated, info
             
 
 if __name__ == '__main__':
-    env = RandomGomoku()
+    env = RandomGomoku(render_mode="human")
     obs = env.reset()
     done = False
     i = 0
     action_values = []
     while not done:
         i += 1
-        action = random.randint(0, 200)
+        action = random.randint(0, env.action_space.n - 1)
         next_state, reward, done, truncated, info = env.step(action)
-        print(info)
+        print(info, reward)
         env.render()
     print(i)
