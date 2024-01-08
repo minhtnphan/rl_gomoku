@@ -157,4 +157,12 @@ def eval_line(line):
 
 
 def get_moves(board):
-    return
+    moves = []
+    for i in range(19):
+        for j in range(19):
+            if board[i][j] == 0:
+                score = 9 - max(abs(i - 9), abs(j - 9))
+                moves.append((score, i, j))
+    moves.sort()
+    moves.reverse()
+    return moves

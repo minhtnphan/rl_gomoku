@@ -1,3 +1,4 @@
+import random
 from gomoku import Gomoku
 import minimax_utils
 import gymnasium as gym
@@ -10,12 +11,11 @@ class MinimaxGomoku(Gomoku):
 
     def __init__(self) -> None:
         super().__init__()
-        self.max_depth = 4
+        self.max_depth = 3
         self.best_move = None
 
     def step(self, action):
-        _, row, col = self.minimax()  # minimax score
-
+        row, col = action
         if self.next_player == "blue":
             self.next_player = "red"
             previous_player = "blue"
@@ -51,21 +51,17 @@ class MinimaxGomoku(Gomoku):
             return minimax_utils.evaluate(self.board, current_player) - minimax_utils.evaluate(self.board,
                                                                                                3 - current_player)
 
-        # score = minimax_utils.evaluate(self.board, current_player) - minimax_utils.evaluate(self.board,
-        #                                                                                     3 - current_player)
         moves = minimax_utils.get_moves(self.board)
         best_move = None
-
-        for score, row, col in moves:
-
-            self.board[row][col] = current_player
+        for score, r, c in moves:
+            print(score, r, c)
+            self.board[r][c] = current_player
             next_player = 3 - current_player
             score = -self.minimax_helper(next_player, depth - 1, -beta, -alpha)
-            self.board[row][col] = 0
-
+            self.board[r][c] = 0
             if score > alpha:
                 alpha = score
-                best_move = (row, col)
+                best_move = (r, c)
                 if alpha >= beta:
                     break
 
@@ -74,5 +70,17 @@ class MinimaxGomoku(Gomoku):
 
         return alpha
 
-    def reset(self):
-        return
+
+if __name__ == '__main__':
+    env = MinimaxGomoku()
+    obs = env.reset()
+    done = False
+    i = 0
+    action_values = []
+    while not done:
+        i += 1
+        _, row, col = env.minimax()
+        next_state, reward, done, truncated, info = env.step((row, col))
+        print(info)
+        env.render()
+    print(i)
