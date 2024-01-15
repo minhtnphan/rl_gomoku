@@ -166,7 +166,7 @@ class Gomoku(gym.Env):
 
 class RandomGomoku(Gomoku):
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs) #check passing params here
 
     def reset(self):
         state, info = super().reset()
