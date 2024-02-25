@@ -3,6 +3,8 @@ from gymnasium.spaces import Box, Discrete, MultiDiscrete
 import numpy as np
 import pygame
 import random
+import tensorflow as tf
+import datetime
 
 
 
@@ -174,15 +176,24 @@ class RandomGomoku(Gomoku):
 
 
 if __name__ == '__main__':
+
     env = RandomGomoku()
     obs = env.reset()
     done = False
     i = 0
     action_values = []
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    train_log_dir = 'logs/train'
+    writer = tf.summary.create_file_writer(train_log_dir)
+
     while not done:
         i += 1
         action = random.randint(0, 200)
         next_state, reward, done, truncated, info = env.step(action)
+        with writer.as_default():
+            tf.summary.scalar("reward", reward, step=i)
+        writer.flush()
         print(info)
         env.render()
     print(i)

@@ -1,3 +1,5 @@
+import math
+
 
 def get_horizontals(board, player):
     horizontals = ['' for i in range(len(board[0]))]
@@ -13,73 +15,98 @@ def get_horizontals(board, player):
 
 
 def get_verticals(board, player):
-    verticals = ['' for i in range(19)]
-    for i in range(19):
-        for j in range(19):
+    verticals = ['' for i in range(len(board))]
+    for i in range(len(board[0])):
+        for j in range(len(board)):
             if board[i][j] == 3 - player:
                 verticals[j] += 'x'
             elif board[i][j] == 0:
                 verticals[j] += 'o'
             elif board[i][j] == player:
                 verticals[j] += '*'
-    print(verticals)
     return verticals
 
 
 def get_left_diags(board, player):
-    diags = ['' for i in range(29)]
-    for i in range(19):
+    size = len(board) if len(board) == len(board[0]) else 0
+    centered_diag = math.floor((2 * size - 1 - 8) / 2)
+
+    if size == 0:
+        return []
+
+    diags = ['']
+
+    # main diag
+    for i in range(size):
         if board[i][i] == 3 - player:
             diags[0] += 'x'
         elif board[i][i] == 0:
             diags[0] += 'o'
         elif board[i][i] == player:
             diags[0] += '*'
-    for i in range(14):
-        for j in range(19):
-            if (i + 1 + j) > 18 or board[i + 1 + j][j] == 3 - player:
-                diags[i + 1] += 'x'
+
+    # get diags from center to left (\)
+    for i in range(centered_diag):
+        d = ''
+        for j in range(size):
+            if (i + 1 + j) > size - 1 or board[i + 1 + j][j] == 3 - player:
+                d += 'x'
             elif board[i + 1 + j][j] == 0:
-                diags[i + 1] += 'o'
+                d += 'o'
             elif board[i + 1 + j][j] == player:
-                diags[i + 1] += '*'
-    for i in range(14):
-        for j in range(19):
-            if (i + 1 + j) > 18 or board[j][i + 1 + j] == 3 - player:
-                diags[i + 15] += 'x'
+                d += '*'
+        diags.append(d)
+
+    # get diags from center to right (/)
+    for i in range(centered_diag):
+        d = ''
+        for j in range(size):
+            if (i + 1 + j) > size - 1 or board[j][i + 1 + j] == 3 - player:
+                d += 'x'
             elif board[j][i + 1 + j] == 0:
-                diags[i + 15] += 'o'
+                d += 'o'
             elif board[j][i + 1 + j] == player:
-                diags[i + 15] += '*'
+                d += '*'
+        diags.append(d)
 
     return diags
 
 
 def get_right_diags(board, player):
-    diags = ['' for i in range(29)]
-    for i in range(19):
-        if board[i][18 - i] == 3 - player:
+    size = len(board) if len(board) == len(board[0]) else 0
+    centered_diag = math.floor((2 * size - 1 - 8) / 2)
+
+    diags = ['']
+    for i in range(size):
+        if board[i][size - 1 - i] == 3 - player:
             diags[0] += 'x'
-        elif board[i][18 - i] == 0:
+        elif board[i][size - 1 - i] == 0:
             diags[0] += 'o'
-        elif board[i][18 - i] == player:
+        elif board[i][size - 1 - i] == player:
             diags[0] += '*'
-    for i in range(14):
-        for j in range(19):
-            if (14 - i + j) > 18 or board[14 - i + j][18 - j] == 3 - player:
-                diags[i + 1] += 'x'
-            elif board[14 - i + j][18 - j] == 0:
-                diags[i + 1] += 'o'
-            elif board[14 - i + j][18 - j] == player:
-                diags[i + 1] += '*'
-    for i in range(14):
-        for j in range(19):
-            if (17 - j) - i < 0 or board[j][(17 - j) - i] == 3 - player:
-                diags[i + 15] += 'x'
-            elif board[j][(17 - j) - i] == 0:
-                diags[i + 15] += 'o'
-            elif board[j][(17 - j) - i] == player:
-                diags[i + 15] += '*'
+
+    for i in range(centered_diag):
+        d = ''
+        for j in range(size):
+            if (centered_diag - i + j) > size - 1 or board[centered_diag - i + j][size - 1 - j] == 3 - player:
+                d += 'x'
+            elif board[centered_diag - i + j][size - 1 - j] == 0:
+                d += 'o'
+            elif board[centered_diag - i + j][size - 1 - j] == player:
+                d += '*'
+        diags.append(d)
+
+    end_count = size - 2
+    for i in range(centered_diag):
+        d = ''
+        for j in range(size):
+            if (end_count - j) - i < 0 or board[j][(end_count - j) - i] == 3 - player:
+                d += 'x'
+            elif board[j][(end_count - j) - i] == 0:
+                d += 'o'
+            elif board[j][(end_count - j) - i] == player:
+                d += '*'
+        diags.append(d)
 
     return diags
 
@@ -158,8 +185,8 @@ def eval_line(line):
 
 def get_moves(board):
     moves = []
-    for i in range(19):
-        for j in range(19):
+    for i in range(len(board)):
+        for j in range(len(board[0])):
             if board[i][j] == 0:
                 score = 9 - max(abs(i - 9), abs(j - 9))
                 moves.append((score, i, j))

@@ -1,10 +1,9 @@
 import random
 from gomoku import Gomoku
 import minimax_utils
-import gymnasium as gym
-from gymnasium.spaces import Box, Discrete, MultiDiscrete
+import tensorflow as tf
 import numpy as np
-import pygame
+
 
 
 class MinimaxGomoku(Gomoku):
@@ -75,12 +74,19 @@ if __name__ == '__main__':
     env = MinimaxGomoku()
     obs = env.reset()
     done = False
+
+    train_log_dir = 'logs/minimax'
+    writer = tf.summary.create_file_writer(train_log_dir)
+
     i = 0
     action_values = []
     while not done:
         i += 1
         _, row, col = env.minimax()
         next_state, reward, done, truncated, info = env.step((row, col))
+        with writer.as_default():
+            tf.summary.scalar("reward", reward, step=i)
+        writer.flush()
         print(info)
         env.render()
     print(i)
